@@ -100,19 +100,3 @@ def marcar_como_pago(id):
     cur.close()
     conn.close()
     return jsonify({'status': 'success', 'novas_parcelas_pagas': novas_parcelas_pagas})
-
-
-# <--- MUDANÇA 2: ENDPOINT SECRETO ADICIONADO --->
-# Adicione este bloco de código no final do seu arquivo.
-# TROQUE A CHAVE SECRETA por algo que só você saiba!
-# A variável deve conter APENAS a chave secreta.
-SECRET_KEY_FOR_INIT = "minha-chave-super-secreta-para-iniciar-o-banco-123"
-
-@app.route(f'/api/init-db/{SECRET_KEY_FOR_INIT}')
-def secret_init_db():
-    try:
-        init_db_command()
-        return "Banco de dados inicializado com sucesso!"
-    except Exception as e:
-        return f"Ocorreu um erro: {e}", 500
-    
