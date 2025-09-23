@@ -105,7 +105,7 @@ def marcar_como_pago(id):
 # <--- MUDANÇA 2: ENDPOINT SECRETO ADICIONADO --->
 # Adicione este bloco de código no final do seu arquivo.
 # TROQUE A CHAVE SECRETA por algo que só você saiba!
-SECRET_KEY_FOR_INIT = "minha-chave-super-secreta-para-iniciar-o-banco-123"
+SECRET_KEY_FOR_INIT = "gestor-back-gabrielas-projects-5c57887c.vercel.app/api/init-db/minha-chave-super-secreta-para-iniciar-o-banco-123"
 
 @app.route(f'/api/init-db/{SECRET_KEY_FOR_INIT}')
 def secret_init_db():
