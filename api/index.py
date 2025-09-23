@@ -1,8 +1,8 @@
-# backend/app.py
+# api/index.py
 
 import os
 import psycopg2
-from psycopg2.extras import RealDictCursor # Facilita a conversão para dicionário
+from psycopg2.extras import RealDictCursor
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from dotenv import load_dotenv
@@ -11,8 +11,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-# Configura o CORS para permitir requisições do seu frontend
-# Em produção, seria ideal restringir a origem: CORS(app, origins=["https://seu-frontend.onrender.com"])
 CORS(app)
 
 # Função para obter a conexão com o banco de dados PostgreSQL
@@ -21,8 +19,9 @@ def get_db_connection():
     conn = psycopg2.connect(os.getenv("DATABASE_URL"))
     return conn
 
-# Comando para inicializar o banco de dados (agora para PostgreSQL)
-@app.cli.command('init-db')
+# <--- MUDANÇA 1: DECORADOR REMOVIDO --->
+# O decorador @app.cli.command('init-db') foi removido. 
+# Ele não é usado no Vercel, mas a função em si é o que precisamos.
 def init_db_command():
     conn = get_db_connection()
     cur = conn.cursor()
@@ -49,7 +48,6 @@ def init_db_command():
 @app.route('/api/cobrancas', methods=['GET'])
 def get_cobrancas():
     conn = get_db_connection()
-    # Usando RealDictCursor para que o resultado já venha no formato de dicionário
     cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute("SELECT * FROM cobrancas ORDER BY data_inicio")
     cobrancas = cur.fetchall()
@@ -63,7 +61,6 @@ def add_cobranca():
     data = request.json
     conn = get_db_connection()
     cur = conn.cursor()
-    # O placeholder no psycopg2 é %s em vez de ?
     cur.execute(
         """INSERT INTO cobrancas 
         (nome_cliente, telefone, descricao, valor, total_parcelas, parcelas_pagas, frequencia, data_inicio) 
@@ -84,7 +81,6 @@ def marcar_como_pago(id):
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     
-    # Busca a cobrança para verificar o estado atual
     cur.execute("SELECT * FROM cobrancas WHERE id = %s", (id,))
     cobranca = cur.fetchone()
 
@@ -93,7 +89,6 @@ def marcar_como_pago(id):
         conn.close()
         return jsonify({'error': 'Cobrança não encontrada'}), 404
 
-    # Incrementa o número de parcelas pagas
     novas_parcelas_pagas = cobranca['parcelas_pagas'] + 1
     
     cur.execute(
@@ -105,3 +100,17 @@ def marcar_como_pago(id):
     cur.close()
     conn.close()
     return jsonify({'status': 'success', 'novas_parcelas_pagas': novas_parcelas_pagas})
+
+
+# <--- MUDANÇA 2: ENDPOINT SECRETO ADICIONADO --->
+# Adicione este bloco de código no final do seu arquivo.
+# TROQUE A CHAVE SECRETA por algo que só você saiba!
+SECRET_KEY_FOR_INIT = "minha-chave-super-secreta-para-iniciar-o-banco-123"
+
+@app.route(f'/api/init-db/{SECRET_KEY_FOR_INIT}')
+def secret_init_db():
+    try:
+        init_db_command()
+        return "Banco de dados inicializado com sucesso!"
+    except Exception as e:
+        return f"Ocorreu um erro: {e}", 500
